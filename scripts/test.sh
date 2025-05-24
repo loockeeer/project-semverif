@@ -40,12 +40,15 @@ patt_ko="assert.*//@KO"
 
 create_file() {
   file=$1
-  filename=$(basename $file)
-  file_html="${result_folder}/${filename}.html"
+  dir_name=$(dirname $file)
+  file_html="${result_folder}/${file}.html"
+
+  mkdir -p "${result_folder}/${dir_name}"
+
   if [[ ! -e "$file_html" ]]
   then
-    sed "s/TITLE/${filename}/g" "scripts/header.html" >> $file_html
-    echo "<h1>${filename}</h1>" >> $file_html
+    sed "s#TITLE#${file}#g" "scripts/header.html" >> $file_html
+    echo "<h1>${file}</h1>" >> $file_html
     echo "<div class=\"c\">" >> $file_html
     cat $file >> $file_html
     echo "</div>" >> $file_html
@@ -56,7 +59,7 @@ create_file() {
 
 end_file() {
   # After the analysis the cfg.dot should correspond to the current test
-  dot -Tsvg cfg.dot -o ${result_folder}/${filename}.svg
+  dot -Tsvg cfg.dot -o ${result_folder}/${file}.svg
   cat "scripts/footer.html" >> $file_html
   rm cfg.dot
 }
@@ -191,10 +194,9 @@ treat_examples() {
 
   for file in $(find "${folder}" -name "*.c" | sort)
   do
-    filename=$(basename $file)
     create_file $file
 
-    echo "<tr><td><a href=\"${filename}.html\"><pre>${filename}</pre></a></td>" >> $index_html
+    echo "<tr><td><a href=\"${file}.html\"><pre>${file}</pre></a></td>" >> $index_html
     echo "<td>" >> $index_html
 
     solved=$(($solved+1))
@@ -202,7 +204,7 @@ treat_examples() {
     echo -ne "\r\t$file $option"
 
     opt_replaced=$(echo "${options}" | sed "s/ /_/g")
-    log="${result_folder}/${filename}.${opt_replaced}.txt"
+    log="${result_folder}/${file}.${opt_replaced}.txt"
     echo "<h2><a href=\"../${log}\">${analyzer} ${options}</a></h2>" >> $file_html
     timeout $max_time $analyzer $options $file > $log 2>&1
     out=$?
