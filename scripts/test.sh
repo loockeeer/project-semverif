@@ -11,7 +11,7 @@ GREEN="\033[92m"
 BOLD="\033[1m"
 RESET="\033[0m"
 BLUE="\033[94m"
-fill="                                                     "
+
 # Default solver path. You can change it if you need
 analyzer="dune exec -- analyzer/analyzer.exe"
 options="options.txt"
@@ -38,33 +38,13 @@ patt_assert="line [0-9]*: Assertion failure"
 # Pattern for expected failure in file
 patt_ko="assert.*//@KO"
 
-# Check if the OS is macOS
-if [[ "$(uname)" == "Darwin" ]]; then
-  # Check if gsed is installed
-  if command -v gsed > /dev/null 2>&1; then
-    alias sed='gsed'
-  else
-    echo "gsed not found. You can install it using 'brew install gnu-sed'"
-    exit -1
-  fi
-  if command -v gfind > /dev/null 2>&1; then
-    FIND='gfind'
-  else
-    echo "gfind not found. You can install it using 'brew install findutils'"
-    exit -1
-  fi
-else
-  FIND='find'
-fi
-
 create_file() {
   file=$1
   filename=$(basename $file)
   file_html="${result_folder}/${filename}.html"
   if [[ ! -e "$file_html" ]]
   then
-    cat "scripts/header.html" > $file_html
-    sed -i "s@TITLE@${filename}@" $file_html
+    sed "s/TITLE/${filename}/g" "scripts/header.html" >> $file_html
     echo "<h1>${filename}</h1>" >> $file_html
     echo "<div class=\"c\">" >> $file_html
     cat $file >> $file_html
@@ -198,7 +178,7 @@ treat_examples() {
   options="$3 $all_opts"         # analyzer CLI options
   expected_folder=$4             # subfolder containing expected result
   bench_regexp="${folder}/*.c"
-  nb_file=$($FIND $folder -iname "*.c" | wc -l)
+  nb_file=$(find "$folder" -name "*.c" | wc -l)
   nb_test=$(( nb_test + nb_file ))
 
   if [[ $nb_file -eq 0 ]]
@@ -209,7 +189,7 @@ treat_examples() {
 
   echo "<tr><th colspan=\"100\" class=\"bench\">${bench_name} ${options}</th></tr>" >> $index_html
 
-  for file in $($FIND "${folder}" -iname "*.c" | sort)
+  for file in $(find "${folder}" -name "*.c" | sort)
   do
     filename=$(basename $file)
     create_file $file
@@ -219,7 +199,7 @@ treat_examples() {
 
     solved=$(($solved+1))
 
-    echo -ne "\r\t$file $option $fill"
+    echo -ne "\r\t$file $option"
 
     opt_replaced=$(echo "${options}" | sed "s/ /_/g")
     log="${result_folder}/${filename}.${opt_replaced}.txt"
@@ -301,7 +281,7 @@ cat "scripts/header_main.html"                     > $index_html
 echo "<h1>Overview</h1>"                          >> $index_html
 echo "<table>"                                    >> $index_html
 
-total=$($FIND $bench -iname "*.c" | wc -l)
+total=$(expr $(find examples -name "*.c" | wc -l))
 solved=0
 
 treat_examples "bool" "Boolean operations" "--domain constants" ""
