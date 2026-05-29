@@ -18,7 +18,7 @@ end
   (for instance: a map from variable to their bounds).
  *)
 
-module type DOMAIN = sig
+module type DOMAIN_MAKE = functor(_: ValueDomain.VALUE_DOMAIN) -> sig
   (* type of abstract elements *)
   (* an element of type t abstracts a set of mappings from variables
        to integers
