@@ -1,1 +1,1 @@
-include Domain.DOMAIN_MAKER
+module Make : Domain.DOMAIN_MAKE

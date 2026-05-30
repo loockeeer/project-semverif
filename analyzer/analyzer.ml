@@ -45,7 +45,7 @@ let doit filename =
           ReducedProductIterator.iterate cfg
   | "polyhedral" ->
           let module PolyhedralIterator =
-              Iterator.Make(Domains.Polyhedral)
+              Iterator.Make(Domains.Polyhedral.Make (Domains.Integer))
           in
           PolyhedralIterator.iterate cfg
   | s -> (
