@@ -81,8 +81,25 @@ module MakeForwardOnly(Vd: ValueDomain.VALUE_DOMAIN) : DOMAIN = struct
     let assign dom var iexpr =
         VarMap.add var (get_value dom iexpr) dom
     
-    let guard domain bexpr = domain 
-
+    let rec prop_not b =
+        match b with
+        | CFG_compare(AST_EQUAL, e1, e2) -> CFG_compare(AST_NOT_EQUAL, e1, e2)
+        | CFG_compare(AST_NOT_EQUAL, e1, e2) -> CFG_compare(AST_EQUAL, e1, e2)
+        | CFG_compare(AST_LESS, e1, e2) (* not(e1 < e2) <-> e1 >= e2 *) ->
+                CFG_compare(AST_GREATER_EQUAL, e1, e2)
+        | CFG_compare(AST_LESS_EQUAL, e1, e2) (* not(e1 <= e2) <-> e1 > e2 *) ->
+                CFG_compare(AST_GREATER, e1, e2)
+        | CFG_compare(AST_GREATER, e1, e2) (* not(e1 > e2) <-> e1 <= e2 *) ->
+                CFG_compare(AST_LESS_EQUAL, e1, e2)
+        | CFG_compare(AST_GREATER_EQUAL, e1, e2) (* not(e1 => e2) <-> e1 < e2 *) ->
+                CFG_compare(AST_LESS, e1, e2)
+        | CFG_bool_rand -> CFG_bool_rand
+        | CFG_bool_const b -> CFG_bool_const (not b)
+        | CFG_bool_unary (AST_NOT, b) -> b
+        | CFG_bool_binary(AST_OR, e1, e2) ->
+                CFG_bool_binary(AST_AND, prop_not e1, prop_not e2)
+        | CFG_bool_binary(AST_AND, e1, e2) ->
+                CFG_bool_binary(AST_OR, prop_not e1, prop_not e2)
     let fold_both d1 d2 f =
         VarMap.fold (fun var value dom ->
             match VarMap.find_opt var d2 with
@@ -98,6 +115,17 @@ module MakeForwardOnly(Vd: ValueDomain.VALUE_DOMAIN) : DOMAIN = struct
 
     let widen d1 d2 = (* TODO : check *)
         fold_both d1 d2 Vd.widen
+
+    let rec guard dom bexpr =
+        match bexpr with
+        | CFG_compare(op, e1, e2) ->
+                let left, right = Vd.compare (get_value dom e1) (get_value dom e2) op in
+                dom (* TODO : use bwd *) 
+        | CFG_bool_unary(AST_NOT, e) -> guard dom (prop_not e)
+        | CFG_bool_binary(AST_AND, e1, e2) -> meet (guard dom e1) (guard dom e2)
+        | CFG_bool_binary(AST_OR, e1, e2) -> join (guard dom e1) (guard dom e2)
+        | CFG_bool_const(b) -> if b then dom else bottom
+        | CFG_bool_rand -> dom
 
     let leq d1 d2 =
         VarMap.fold (fun var value is_leq ->
