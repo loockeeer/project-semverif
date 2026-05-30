@@ -59,13 +59,13 @@ module type DOMAIN = sig
   val pp : Format.formatter -> t -> unit
 end
 
-module type DOMAIN_MAKE = functor(_: ValueDomain.VALUE_DOMAIN) -> DOMAIN
+module type DOMAIN_MAKE = functor(_: VARS)(_: ValueDomain.VALUE_DOMAIN) -> DOMAIN
 
-module MakeForwardOnly(Vd: ValueDomain.VALUE_DOMAIN) : DOMAIN = struct
+module MakeForwardOnly(Vars: VARS)(Vd: ValueDomain.VALUE_DOMAIN) : DOMAIN = struct
     type t = Vd.t VarMap.t
 
-    let init = VarMap.empty
-    let bottom = VarMap.empty
+    let init = VarMap.of_list (List.map (fun var -> (var, Vd.top)) Vars.support)
+    let bottom = VarMap.of_list (List.map (fun var -> (var, Vd.bottom)) Vars.support)
     let is_bottom = VarMap.exists (fun _ -> Vd.is_bottom)
 
     let rec get_value dom x =
@@ -100,32 +100,44 @@ module MakeForwardOnly(Vd: ValueDomain.VALUE_DOMAIN) : DOMAIN = struct
                 CFG_bool_binary(AST_AND, prop_not e1, prop_not e2)
         | CFG_bool_binary(AST_AND, e1, e2) ->
                 CFG_bool_binary(AST_OR, prop_not e1, prop_not e2)
-    let fold_both d1 d2 f =
+    let join = (* we join each value in the domain *)
         VarMap.fold (fun var value dom ->
-            match VarMap.find_opt var d2 with
-            | Some(other) -> VarMap.add var (f value other) dom
+            match VarMap.find_opt var dom with
+            | Some(other) -> VarMap.add var (Vd.join value other) dom
             | None -> VarMap.add var value dom
-        ) d1 init
-
-    let join d1 d2 = (* we join each value in the domain *)
-        fold_both d1 d2 Vd.join
+        )
 
     let meet d1 d2 = (* TODO : check *)
-        fold_both d1 d2 Vd.meet
+        if is_bottom d1 then bottom
+        else VarMap.fold (fun var value dom ->
+            if is_bottom dom then bottom (* [meet x bottom] always gives [bottom] *)
+            else
+                match VarMap.find_opt var d2 with
+                | Some other ->
+                        let value_meet_other = Vd.meet value other in
+                        if Vd.is_bottom value_meet_other then
+                            bottom
+                        else VarMap.add var value_meet_other dom
+                | None -> bottom
+        ) d1 d2 
 
     let widen d1 d2 = (* TODO : check *)
-        fold_both d1 d2 Vd.widen
+        VarMap.mapi (fun var _ ->
+            let value = VarMap.find_opt var d1 |> Option.value ~default:Vd.bottom
+            in
+            Vd.widen value (VarMap.find var d2)
+        ) (join d1 d2)
 
     let rec guard dom bexpr =
         match bexpr with
-        | CFG_compare(op, e1, e2) ->
-                let left, right = Vd.compare (get_value dom e1) (get_value dom e2) op in
-                dom (* TODO : use bwd *) 
         | CFG_bool_unary(AST_NOT, e) -> guard dom (prop_not e)
         | CFG_bool_binary(AST_AND, e1, e2) -> meet (guard dom e1) (guard dom e2)
         | CFG_bool_binary(AST_OR, e1, e2) -> join (guard dom e1) (guard dom e2)
         | CFG_bool_const(b) -> if b then dom else bottom
         | CFG_bool_rand -> dom
+        | CFG_compare(op, e1, e2) ->
+                let left, right = Vd.compare (get_value dom e1) (get_value dom e2) op in
+                dom (* TODO : use bwd *)
 
     let leq d1 d2 =
         VarMap.fold (fun var value is_leq ->
@@ -134,13 +146,15 @@ module MakeForwardOnly(Vd: ValueDomain.VALUE_DOMAIN) : DOMAIN = struct
             | None -> false
         ) d1 true
 
-    let pp fmt =
+    let pp fmt dom =
+        Format.fprintf fmt "{";
         VarMap.iter (
             fun var value ->
                 Format.fprintf fmt "%s <- " var.var_name;
                 Vd.pp fmt value;
                 Format.fprintf fmt "\n"
-        )
+        ) dom;
+        Format.fprintf fmt "}"
 
     let narrow _ _ = failwith "not implemented"
 end

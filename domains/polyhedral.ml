@@ -2,7 +2,7 @@ open Frontend
 open Frontend.AbstractSyntax
 open ControlFlowGraph
 
-module Make(Vd: ValueDomain.VALUE_DOMAIN) = struct
+module Make(Vars : Domain.VARS)(Vd: ValueDomain.VALUE_DOMAIN) = struct
     type t = Vd.t VarMap.t
 
     let init = VarMap.empty

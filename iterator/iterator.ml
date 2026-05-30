@@ -76,7 +76,7 @@ module Make (Dom : Domain.DOMAIN) =
                         NodeMap.add node new_domain env
                     else env
                 in
-                worklist_fix (List.fold_left (fun acc x -> NodeSet.add x.arc_dst acc) wl node.node_out) env
+                worklist_fix (List.fold_left (fun acc x -> NodeSet.add x.arc_dst acc) (NodeSet.remove node wl) node.node_out) env
         in
         match List.find_opt (fun f -> f.func_name = "main") cfg.cfg_funcs with
         | None -> ()
