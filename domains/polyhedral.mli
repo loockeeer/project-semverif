@@ -1,1 +1,1 @@
-include ValueDomain.VALUE_DOMAIN
+include Domain.DOMAIN_MAKER
