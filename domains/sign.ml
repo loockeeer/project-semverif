@@ -81,8 +81,12 @@ let meet x y = (* dual of join *)
    lattice is finite *)
 let widen = join
 
-let compare x y op = failwith "wip"
-let leq x y = failwith "wip"
+let compare x y op = (x, y)
+let leq x y = match x, y with
+| Bot, _ | _, Top -> true (* [Bot] is included in everything, and everything
+is included in [Top], by definition *)
+| _ -> x = y (* Since the concrete domains associated with [Pos], [Neg] and
+[Zero] are all disjoint, they are never included in one another *)
 
 let bwd_unary = failwith "not implemented"
 let bwd_binary = failwith "not implemented"
