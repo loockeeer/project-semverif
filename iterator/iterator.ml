@@ -8,9 +8,8 @@ open Frontend
 open ControlFlowGraph
 open Domains
 
-module Make (DM : Domain.DOMAIN_MAKE) (VD: ValueDomain.VALUE_DOMAIN) = 
+module Make (Dom : Domain.DOMAIN) =
     struct
-    module Dom = DM(VD)
     (* [find_loop_nodes] returns a [NodeSet] of nodes belonging to a cycle.
        They should be interpreted as the nodes on which a loop loops *)
     let find_loop_nodes cfg =

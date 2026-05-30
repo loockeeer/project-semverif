@@ -18,31 +18,34 @@ let doit filename =
   let cfg = Tree_to_cfg.prog prog in
   if !Options.verbose then Format.printf "%a" ControlFlowGraphPrinter.print_cfg cfg ;
   ControlFlowGraphPrinter.output_dot !Options.cfg_out cfg ;
-  let module PartialIterator = Iterator.Make (Domains.Domain.MakeForwardOnly) in
   match !Options.domain with
   | "sign" ->
-          let module SignIterator =
-              PartialIterator (Domains.Sign)
+          let module D =
+              Domains.Domain.MakeForwardOnly (Domains.Sign)
           in
+          let module SignIterator = Iterator.Make(D) in
           SignIterator.iterate cfg
   | "interval" ->
-          let module IntervalIterator =
-              PartialIterator (Domains.Interval)
+          let module D =
+              Domains.Domain.MakeForwardOnly (Domains.Interval)
           in
+          let module IntervalIterator = Iterator.Make(D) in
           IntervalIterator.iterate cfg
   | "congruence" ->
-          let module CongruenceIterator =
-              PartialIterator (Domains.Congruence)
+          let module D =
+              Domains.Domain.MakeForwardOnly (Domains.Congruence)
           in
+          let module CongruenceIterator = Iterator.Make(D) in
           CongruenceIterator.iterate cfg
   | "reducedProduct" ->
-          let module ReducedProductIterator =
-              PartialIterator (Domains.ReducedProduct)
+          let module D =
+              Domains.Domain.MakeForwardOnly (Domains.ReducedProduct)
           in
+          let module ReducedProductIterator = Iterator.Make(D) in
           ReducedProductIterator.iterate cfg
   | "polyhedral" ->
-          let module PolyhedralIterator = 
-              PartialIterator (Domains.Polyhedral)
+          let module PolyhedralIterator =
+              Iterator.Make(Domains.Polyhedral)
           in
           PolyhedralIterator.iterate cfg
   | s -> (
