@@ -61,21 +61,21 @@ module Make (Dom : Domain.DOMAIN) =
                             Format.printf "%a: %s \"%a\"@." ControlFlowGraphPrinter.pp_pos (fst ext) "Assertion failure" ControlFlowGraphPrinter.print_bool_expr bexpr;
                     domain_assertion_success
             | CFG_call f -> iter_func f
-        and worklist_fix (wl: NodeSet.t) (env: Dom.t) : Dom.t =
+        and worklist_fix (wl: NodeSet.t) (dom: Dom.t) : Dom.t =
             match NodeSet.choose_opt wl with
-            | None -> env
+            | None -> dom 
             | Some node ->
                 (* Get [node]'s associated domain, if not found, assume it is
                    [Dom.bottom] *)
                 let iterable_arcs = node.node_in in
-                let domains = List.map (iter_arc env) iterable_arcs in
+                let domains = List.map (iter_arc dom) iterable_arcs in
                 let new_domain = List.fold_left Dom.join Dom.bottom domains in
-                Format.printf "--- worklist ---\ndom: %a\nnew_dom: %a\n--- end worklist ---\n" Dom.pp env Dom.pp new_domain;
+                Format.printf "--- worklist ---\ndom: %a\nnew_dom: %a\n--- end worklist ---\n" Dom.pp dom Dom.pp new_domain;
                 let new_env = 
                         (* In this case, the node's domain has been updated,
                             and we need to update it possibly using a widening *)
                         if NodeSet.mem node widening_nodes 
-                            then Dom.widen env new_domain
+                            then Dom.widen dom new_domain
                             else new_domain 
                 in
                 worklist_fix (List.fold_left (fun acc x -> NodeSet.add x.arc_dst acc) (NodeSet.remove node wl) node.node_out) new_env
