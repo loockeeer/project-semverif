@@ -67,8 +67,18 @@ let binary x y op =
         | _ -> Top
     )
 
-let join x y = failwith "wip"
-let meet x y = failwith "wip"
+let join x y =
+    match x, y with
+    | z, Bot | Bot, z -> z (* join keeps the best approximation *)
+    | _ -> if x = y then x else Top (* join keeps the best approximation,
+        if sign differs, then it must Top *)
+let meet x y = (* dual of join *)
+    match x, y with
+    | z, Top | Top, z -> z
+    | _ -> if x = y then x else Bot
+
+(* We use the widening as our join. Here, widen ensures termination as the
+   lattice is finite *)
 let widen = join
 
 let compare x y op = failwith "wip"
