@@ -64,7 +64,7 @@ module type DOMAIN_MAKE = functor(_: VARS)(_: ValueDomain.VALUE_DOMAIN) -> DOMAI
 module MakeForwardOnly(Vars: VARS)(Vd: ValueDomain.VALUE_DOMAIN) : DOMAIN = struct
     type t = Vd.t VarMap.t
 
-    let init = VarMap.of_list (List.map (fun var -> (var, Vd.top)) Vars.support)
+    let init = VarMap.of_list (List.map (fun var -> (var, Vd.const Z.zero)) Vars.support)
     let bottom = VarMap.of_list (List.map (fun var -> (var, Vd.bottom)) Vars.support)
     let is_bottom = VarMap.exists (fun _ -> Vd.is_bottom)
 
@@ -122,6 +122,7 @@ module MakeForwardOnly(Vars: VARS)(Vd: ValueDomain.VALUE_DOMAIN) : DOMAIN = stru
         ) d1 d2 
 
     let widen d1 d2 = (* TODO : check *)
+
         VarMap.mapi (fun var _ ->
             let value = VarMap.find_opt var d1 |> Option.value ~default:Vd.bottom
             in
@@ -152,7 +153,7 @@ module MakeForwardOnly(Vars: VARS)(Vd: ValueDomain.VALUE_DOMAIN) : DOMAIN = stru
             fun var value ->
                 Format.fprintf fmt "%s <- " var.var_name;
                 Vd.pp fmt value;
-                Format.fprintf fmt "\n"
+                Format.fprintf fmt ", "
         ) dom;
         Format.fprintf fmt "}"
 

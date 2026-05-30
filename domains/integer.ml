@@ -3,7 +3,7 @@ open Frontend.AbstractSyntax
 
 type t = Top | Bot | Integer of Z.t
 
-let pp fmt x = Format.fprintf fmt "%s@." (
+let pp fmt x = Format.fprintf fmt "%s" (
     match x with
     | Top -> "⊤"
     | Bot -> "⊥"
@@ -32,7 +32,16 @@ let unary x op =
 let binary x y op =
     match x, y with
     | Bot, _ | _, Bot -> Bot
-    | _ -> Top
+    | Top, Integer(n) | Integer(n), Top when n = Z.zero && op = AST_MULTIPLY -> Integer (Z.zero)
+    | Top, _ | _, Top -> Top
+    | _, Integer(n) when n = Z.zero && (op = AST_DIVIDE || op = AST_MODULO) -> bottom
+    | Integer x, Integer y ->(
+        match op with
+        | AST_PLUS -> Integer (Z.add x y)
+        | AST_MINUS -> Integer (Z.sub x y)
+        | AST_DIVIDE -> if y = Z.zero then bottom else Integer (Z.div x y)
+        | AST_MULTIPLY -> Integer (Z.mul x y)
+        | AST_MODULO -> if y = Z.zero then bottom else Integer (Z.(mod) x y))
 
 let join x y = (* join keeps the best approximation *)
     match x, y with
