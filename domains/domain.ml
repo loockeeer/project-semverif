@@ -80,14 +80,39 @@ module MakeForwardOnly(Vd: ValueDomain.VALUE_DOMAIN) : DOMAIN = struct
 
     let assign dom var iexpr =
         VarMap.add var (get_value dom iexpr) dom
+    
+    let guard domain bexpr = domain 
 
-    let guard dom bexpr = failwith "wip"
-    let join d1 d2 = failwith "wip"
-    let meet d1 d2 = failwith "wip"
-    let widen d1 d2 = failwith "wip"
+    let fold_both d1 d2 f =
+        VarMap.fold (fun var value dom ->
+            match VarMap.find_opt var d2 with
+            | Some(other) -> VarMap.add var (f value other) dom
+            | None -> VarMap.add var value dom
+        ) d1 init
 
-    let leq d1 d2 = failwith "wip"
-    let pp fmt dom = failwith "wip"
+    let join d1 d2 = (* we join each value in the domain *)
+        fold_both d1 d2 Vd.join
 
-    let narrow = failwith "not implemented"
+    let meet d1 d2 = (* TODO : check *)
+        fold_both d1 d2 Vd.meet
+
+    let widen d1 d2 = (* TODO : check *)
+        fold_both d1 d2 Vd.widen
+
+    let leq d1 d2 =
+        VarMap.fold (fun var value is_leq ->
+            match VarMap.find_opt var d2 with
+            | Some other -> is_leq && Vd.leq value other
+            | None -> false
+        ) d1 true
+
+    let pp fmt =
+        VarMap.iter (
+            fun var value ->
+                Format.fprintf fmt "%s <- " var.var_name;
+                Vd.pp fmt value;
+                Format.fprintf fmt "\n"
+        )
+
+    let narrow _ _ = failwith "not implemented"
 end

@@ -3,7 +3,10 @@ open Frontend.AbstractSyntax
 
 type t = Bot | Modulo of Z.t * Z.t (* x is Modulo(a, b) if x = a (mod b) *)
 
-let pp fmt x = failwith "wip"
+let pp fmt x =
+    match x with
+    | Bot -> Format.fprintf fmt "⊥@."
+    | Modulo(a, b) -> Format.fprintf fmt "%s (mod %s)@." (Z.to_string a) (Z.to_string b)
 
 let top = Modulo(Z.one, Z.zero)
 let bottom = Bot
@@ -55,8 +58,8 @@ let meet x y = failwith "wip"
 let widen = join
 
 let compare x y op = failwith "wip"
-let leq = failwith "wip"
+let leq _ _ = failwith "wip"
 
-let bwd_unary = failwith "not implemented"
-let bwd_binary = failwith "not implemented"
-let narrow = failwith "not implemented"
+let bwd_unary _ _ _ = failwith "not implemented"
+let bwd_binary _ _ _ = failwith "not implemented"
+let narrow _ _ = failwith "not implemented"

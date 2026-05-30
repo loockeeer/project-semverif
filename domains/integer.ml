@@ -3,7 +3,12 @@ open Frontend.AbstractSyntax
 
 type t = Top | Bot | Integer of Z.t
 
-let pp fmt x = failwith "wip"
+let pp fmt x = Format.fprintf fmt "%s@." (
+    match x with
+    | Top -> "⊤"
+    | Bot -> "⊥"
+    | Integer z -> Z.to_string z
+) 
 
 let top = Top
 let bottom = Bot
@@ -27,15 +32,27 @@ let unary x op =
 let binary x y op =
     match x, y with
     | Bot, _ | _, Bot -> Bot
-    | _ -> failwith "wip"
+    | _ -> Top
 
-let join x y = failwith "wip"
-let meet x y = failwith "wip"
-let widen x y = failwith "wip"
+let join x y = (* join keeps the best approximation *)
+    match x, y with
+    | z, Bot | Bot, z -> z
+    | _ -> if x = y then x else Top
 
-let compare x y = failwith "wip"
-let leq x y = failwith "wip"
+let meet x y = (* dual of join *)
+    match x, y with
+    | z, Top | Top, z -> z
+    | _ -> if x = y then x else Bot
 
-let bwd_unary = failwith "not implemented"
-let bwd_binary = failwith "not implemented"
-let narrow = failwith "not implemented"
+(* join ensures termination *)
+let widen = join
+
+let compare x y op = (x, y)
+let leq x y = (* almost the same as for the sign domain *)
+    match x, y with
+    | Bot, _ | _, Top -> true
+    | _ -> if x = y then true else false
+
+let bwd_unary _ _ _ = failwith "not implemented"
+let bwd_binary _ _ _ = failwith "not implemented"
+let narrow _ _ = failwith "not implemented"

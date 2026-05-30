@@ -88,6 +88,6 @@ is included in [Top], by definition *)
 | _ -> x = y (* Since the concrete domains associated with [Pos], [Neg] and
 [Zero] are all disjoint, they are never included in one another *)
 
-let bwd_unary = failwith "not implemented"
-let bwd_binary = failwith "not implemented"
-let narrow x y = failwith "not implemented"
+let bwd_unary _ _ _ = failwith "not implemented"
+let bwd_binary _ _ _ = failwith "not implemented"
+let narrow _ _ = failwith "not implemented"

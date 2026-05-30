@@ -16,9 +16,16 @@ open Frontend
 let doit filename =
   let prog = FileParser.parse_file filename in
   let cfg = Tree_to_cfg.prog prog in
-  if !Options.verbose then Format.printf "%a" ControlFlowGraphPrinter.print_cfg cfg ;
-  ControlFlowGraphPrinter.output_dot !Options.cfg_out cfg ;
+  if !Options.verbose then 
+      (Format.printf "%a" ControlFlowGraphPrinter.print_cfg cfg ;
+       ControlFlowGraphPrinter.output_dot !Options.cfg_out cfg);
   match !Options.domain with
+  | "constants" ->
+          let module D =
+              Domains.Domain.MakeForwardOnly (Domains.Integer)
+          in
+          let module IntegersIterator = Iterator.Make(D) in
+          IntegersIterator.iterate cfg
   | "sign" ->
           let module D =
               Domains.Domain.MakeForwardOnly (Domains.Sign)

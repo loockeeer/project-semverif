@@ -30,5 +30,5 @@ module Make(Vd: ValueDomain.VALUE_DOMAIN) = struct
     let leq d1 d2 = failwith "wip"
     let pp fmt dom = failwith "wip"
 
-    let narrow = failwith "not implemented"
+    let narrow _ _ = failwith "not implemented"
 end
