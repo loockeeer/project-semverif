@@ -295,6 +295,12 @@ treat_examples "interval" "Interval operations" "--domain interval" ""
 treat_examples "constant_loop" "Constants loops (I)" "--domain interval" ""
 treat_examples "interval_loop" "Interval loops" "--domain interval" ""
 
+treat_examples "bool" "Boolean operations" "--domain polyhedral" ""
+treat_examples "constant" "Constants operations" "--domain polyhedral" ""
+treat_examples "constant_loop" "Constants loops" "--domain polyhedral" ""
+treat_examples "interval" "Interval operations" "--domain polyhedral" ""
+treat_examples "interval_loop" "Interval loops" "--domain polyhedral" ""
+
 echo "</table>"                                   >> $index_html
 echo "</body>"                                    >> $index_html
 echo "</html>"                                    >> $index_html

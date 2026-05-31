@@ -41,12 +41,9 @@ module Make (Dom : Domain.DOMAIN) =
         let rec iter_func (f: func) : Dom.t =
             (* Use the fixpoint algorithm to get a mapping node => Dom.t for
                each analyzed node, starting at the function [f]'s entrypoint *)
-            worklist_fix 
                 (* We initialize the worklist with every successor of [node]. *)
-                (NodeSet.of_list (List.map (fun arc -> arc.arc_dst) f.func_entry.node_out))
-                (Dom.init) 
             
-        and iter_arc (dom: Dom.t) (arc: arc) : Dom.t =
+        let iter_arc (dom: Dom.t) (arc: arc) : Dom.t =
             match arc.arc_inst with
             | CFG_skip(_) -> dom
             | CFG_assign (var, iexpr) -> Dom.assign dom var iexpr
@@ -60,25 +57,45 @@ module Make (Dom : Domain.DOMAIN) =
                     if not (Dom.is_bottom domain_assertion_failure) then
                             Format.printf "%a: %s \"%a\"@." ControlFlowGraphPrinter.pp_pos (fst ext) "Assertion failure" ControlFlowGraphPrinter.print_bool_expr bexpr;
                     domain_assertion_success
-            | CFG_call f -> iter_func f
-        and worklist_fix (wl: NodeSet.t) (dom: Dom.t) : Dom.t =
+                | CFG_call f -> iter_func f
+            in
+            let rec loop (states: Dom.t NodeMap.t) (wl: NodeSet.t) : Dom.t NodeMap.t =
             match NodeSet.choose_opt wl with
-            | None -> dom 
+            | None -> states
             | Some node ->
-                (* Get [node]'s associated domain, if not found, assume it is
-                   [Dom.bottom] *)
-                let iterable_arcs = node.node_in in
-                let domains = List.map (iter_arc dom) iterable_arcs in
-                let new_domain = List.fold_left Dom.join Dom.bottom domains in
-                Format.printf "--- worklist ---\ndom: %a\nnew_dom: %a\n--- end worklist ---\n" Dom.pp dom Dom.pp new_domain;
-                let new_env = 
-                        (* In this case, the node's domain has been updated,
-                            and we need to update it possibly using a widening *)
-                        if NodeSet.mem node widening_nodes 
-                            then Dom.widen dom new_domain
-                            else new_domain 
-                in
-                worklist_fix (List.fold_left (fun acc x -> NodeSet.add x.arc_dst acc) (NodeSet.remove node wl) node.node_out) new_env
+                    let wl = NodeSet.remove node wl in
+                    let in_state =
+                        match NodeMap.find_opt node states with
+                        | Some dom -> dom
+                        | None -> Dom.bottom
+                    in
+                    let states, wl =
+                        List.fold_left
+                            (fun (states, wl) arc ->
+                                let out_state = iter_arc in_state arc in
+                                let dst_old =
+                                    match NodeMap.find_opt arc.arc_dst states with
+                                    | Some dom -> dom
+                                    | None -> Dom.bottom
+                                in
+                                let dst_join = Dom.join dst_old out_state in
+                                let dst_new =
+                                    if NodeSet.mem arc.arc_dst widening_nodes
+                                    then Dom.widen dst_old dst_join
+                                    else dst_join
+                                in
+                                if Dom.leq dst_new dst_old then (states, wl)
+                                else (NodeMap.add arc.arc_dst dst_new states, NodeSet.add arc.arc_dst wl))
+                            (states, wl)
+                            node.node_out
+                    in
+                    loop states wl
+            in
+            let states0 = NodeMap.add f.func_entry Dom.init NodeMap.empty in
+            let final_states = loop states0 (NodeSet.singleton f.func_entry) in
+            match NodeMap.find_opt f.func_exit final_states with
+            | Some dom -> dom
+            | None -> Dom.bottom
         in
         match List.find_opt (fun f -> f.func_name = "main") cfg.cfg_funcs with
         | None -> ()

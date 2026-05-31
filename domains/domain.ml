@@ -64,9 +64,9 @@ module type DOMAIN_MAKE = functor(_: VARS)(_: ValueDomain.VALUE_DOMAIN) -> DOMAI
 module MakeForwardOnly(Vars: VARS)(Vd: ValueDomain.VALUE_DOMAIN) : DOMAIN = struct
     type t = Vd.t VarMap.t
 
-    let init = VarMap.of_list (List.map (fun var -> (var, Vd.const Z.zero)) Vars.support)
-    let bottom = VarMap.of_list (List.map (fun var -> (var, Vd.bottom)) Vars.support)
-    let is_bottom = VarMap.exists (fun _ -> Vd.is_bottom)
+    let init = List.fold_left (fun dom var -> VarMap.add var (Vd.const Z.zero) dom) VarMap.empty Vars.support
+    let bottom = List.fold_left (fun dom var -> VarMap.add var Vd.bottom dom) VarMap.empty Vars.support
+    let is_bottom = VarMap.for_all (fun _ -> Vd.is_bottom)
 
     let rec get_value dom x =
         match x with
