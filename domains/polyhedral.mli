@@ -4,5 +4,5 @@ module type BACKEND = sig
 end
 
 module Make :
-	functor (_ : Domain.VARS) (_ : ValueDomain.VALUE_DOMAIN) (_ : BACKEND) ->
+	functor (_ : Domain.VARS) (_ : BACKEND) ->
 		Domain.DOMAIN
