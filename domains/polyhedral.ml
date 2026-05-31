@@ -10,7 +10,7 @@ module type BACKEND = sig
   val manager : man Apron.Manager.t
 end
 
-module Make (V : Domain.VARS) (_ : ValueDomain.VALUE_DOMAIN) (Backend : BACKEND) : Domain.DOMAIN = struct
+module Make (V : Domain.VARS) (Backend : BACKEND) : Domain.DOMAIN = struct
   open Apron
 
   (* manager *)

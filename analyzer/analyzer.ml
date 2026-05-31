@@ -64,12 +64,12 @@ let doit filename =
           ReducedProductIterator.iterate cfg
   | "polyhedral" ->
           let module PolyhedralIterator =
-              Iterator.Make(Domains.Polyhedral.Make (Vars) (Domains.Integer) (PolyhedralBackend))
+              Iterator.Make(Domains.Polyhedral.Make (Vars) (PolyhedralBackend))
           in
           PolyhedralIterator.iterate cfg
   | "octagon" ->
           let module OctagonIterator =
-              Iterator.Make(Domains.Polyhedral.Make (Vars) (Domains.Integer) (OctagonBackend))
+              Iterator.Make(Domains.Polyhedral.Make (Vars) (OctagonBackend))
           in
           OctagonIterator.iterate cfg
   | s -> (
