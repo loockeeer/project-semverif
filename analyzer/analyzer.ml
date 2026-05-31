@@ -12,6 +12,16 @@
 
 open Frontend
 
+module PolyhedralBackend = struct
+    type man = Polka.loose Polka.t
+    let manager = Polka.manager_alloc_loose ()
+end
+
+module OctagonBackend = struct
+    type man = Oct.t
+    let manager = Oct.manager_alloc ()
+end
+
 (* parse filename *)
 let doit filename =
   let prog = FileParser.parse_file filename in
@@ -54,12 +64,17 @@ let doit filename =
           ReducedProductIterator.iterate cfg
   | "polyhedral" ->
           let module PolyhedralIterator =
-              Iterator.Make(Domains.Polyhedral.Make (Vars) (Domains.Integer))
+              Iterator.Make(Domains.Polyhedral.Make (Vars) (Domains.Integer) (PolyhedralBackend))
           in
           PolyhedralIterator.iterate cfg
+  | "octagon" ->
+          let module OctagonIterator =
+              Iterator.Make(Domains.Polyhedral.Make (Vars) (Domains.Integer) (OctagonBackend))
+          in
+          OctagonIterator.iterate cfg
   | s -> (
         Printf.printf "error: the value domain %s does not exist\n" s;
-        print_endline "available value domains: sign, interval, congruence, reducedProduct, polyhedral";
+        print_endline "available value domains: sign, interval, congruence, reducedProduct, polyhedral, octagon";
         exit 1
         )
 (* parses arguments to get filename *)

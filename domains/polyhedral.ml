@@ -5,12 +5,17 @@ open Apron
 
 exception Top
 
-module Make (V : Domain.VARS) (_ : ValueDomain.VALUE_DOMAIN) : Domain.DOMAIN = struct
+module type BACKEND = sig
+  type man
+  val manager : man Apron.Manager.t
+end
+
+module Make (V : Domain.VARS) (_ : ValueDomain.VALUE_DOMAIN) (Backend : BACKEND) : Domain.DOMAIN = struct
   open Apron
 
   (* manager *)
-  type man = Polka.loose Polka.t
-  let manager = Polka.manager_alloc_loose ()
+  type man = Backend.man
+  let manager = Backend.manager
 
   (* abstract elements *)
   type t = man Abstract1.t
