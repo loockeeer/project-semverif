@@ -60,7 +60,7 @@ module Make (Dom : Domain.DOMAIN) =
                 | None -> states
                 | Some node ->
                         let wl = NodeSet.remove node wl in
-                        let in_state =
+                        let in_state = 
                             match NodeMap.find_opt node states with
                             | Some dom -> dom
                             | None -> Dom.bottom
