@@ -70,7 +70,10 @@ positive and negative infinity, respectively.
 Note that there is an overlap between `Top` and other constructs (`Interval Ninf Pinf` semantically equals `Top`), which doesn't pose any problems later on.
 
 ### Polyhedral domain(s)
-wip
+We use the APRON library to represent the polyhedral domain. Arithmetic operations are transformed 
+into linear expressions when possible, which allows to express constraints in the domain.
+
+One difficulty was writing the domain without being able to test it, as the iterator was not finished yet. Added to this,
+the domain is very complex and when expressions are not linear, deciding on the transformation is not trivial.
 
 ## Analyzer
-wip
