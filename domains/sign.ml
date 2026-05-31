@@ -55,9 +55,9 @@ let binary x y op =
         match x, y with
         | Pos, Pos | Neg, Neg-> Pos
         | Neg, Pos | Pos, Neg -> Neg
+        | _, Zero | Zero, _ -> Zero
         | Bot, _ | _, Bot -> Bot
         | Top, _ | _, Top -> Top
-        | _, Zero | Zero, _ -> Zero
     )
     | AST_DIVIDE -> (
         match x, y with

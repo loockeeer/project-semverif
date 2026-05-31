@@ -74,7 +74,14 @@ let rec meet x y = (* interval intersection *)
 let widen x y = join x y
 
 let compare x y op = (x, y)
-let leq x y = true
+let leq x y =
+    match x, y with
+    | Bot, _ -> true
+    | _, Top -> true
+    | Top, _ -> false
+    | _, Bot -> false
+    | Interval (xs, xe), Interval (ys, ye) ->
+            le_bounds ys xs && le_bounds xe ye
 
 let bwd_unary x _ _ = x
 
@@ -90,7 +97,7 @@ let contains_zero x =
     | Top -> true
     | Bot -> false
     | Interval (istart, iend) ->
-            bound_sign istart <> bound_sign iend
+            le_bounds istart (Integer Z.zero) && le_bounds (Integer Z.zero) iend
 
 let bwd_binary x y op r =
     match op with
