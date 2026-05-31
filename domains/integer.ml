@@ -55,13 +55,60 @@ let meet x y = (* dual of join *)
 
 (* join ensures termination *)
 let widen = join
+let compare x y op =
+    match op with
+    | AST_EQUAL -> (
+        match x, y with
+        | Bot, _ | _, Bot -> (Bot, Bot)
+        | (Integer _) as z, _ | _, ((Integer _) as z) -> (z, z)
+        | Top, Top -> (Top, Top)
+    )
+    | AST_NOT_EQUAL -> (
+        match x, y with
+        | Top, Top -> (Top, Top)
+        | Bot, _ | _, Bot -> (Bot, Bot)
+        | Top, Integer _ | Integer _, Top -> (x, y)
+        | Integer _, Integer _ when x <> y -> (x, y)
+        | _ -> (Bot, Bot)
+    )
+    | _ -> match x, y with
+    | Top, Top -> (Top, Top)
+    | Bot, _ | _, Bot -> (Bot, Bot)
+    | Top, Integer _ | Integer _, Top -> (x, y)
+    | Integer x, Integer y ->
+            let op = Z.(match op with
+            | AST_GREATER -> gt
+            | AST_LESS -> lt
+            | AST_GREATER_EQUAL -> geq 
+            | AST_LESS_EQUAL -> leq
+            | _ -> failwith "unreachable")
+            in
+            if op x y then (Integer x, Integer y)
+            else (Bot, Bot)
 
-let compare x y op = (x, y)
 let leq x y = (* almost the same as for the sign domain *)
     match x, y with
     | Bot, _ | _, Top -> true
     | _ -> if x = y then true else false
 
-let bwd_unary _ _ _ = failwith "not implemented"
-let bwd_binary _ _ _ = failwith "not implemented"
+let bwd_unary x _ _ = x
+let bwd_binary x y op r =
+    match op with
+    | AST_PLUS -> meet x (binary r y AST_MINUS), meet y (binary r x AST_MINUS)
+    | AST_MINUS -> meet x (binary r y AST_PLUS), meet y (binary r x AST_PLUS)
+    | AST_DIVIDE -> meet x (binary r y AST_MULTIPLY), meet y (binary r x AST_MULTIPLY)
+    | AST_MODULO -> (x, x)
+    | AST_MULTIPLY -> 
+            let left = match y, r with
+                    | Integer a, Integer b when a = Z.zero && b = Z.zero -> x
+                    | Integer a, _ when a = Z.zero -> bottom
+                    | _ -> meet x (binary r y AST_DIVIDE)
+            in
+            let right = match x, r with
+            | Integer a, Integer b when a = Z.zero && b = Z.zero -> y
+            | Integer a, _ when a = Z.zero -> bottom
+            | _ -> meet y (binary r x AST_DIVIDE)
+            in
+            left, right
+
 let narrow _ _ = failwith "not implemented"

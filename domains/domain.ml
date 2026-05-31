@@ -66,7 +66,7 @@ module MakeForwardOnly(Vars: VARS)(Vd: ValueDomain.VALUE_DOMAIN) : DOMAIN = stru
 
     let init = List.fold_left (fun dom var -> VarMap.add var (Vd.const Z.zero) dom) VarMap.empty Vars.support
     let bottom = List.fold_left (fun dom var -> VarMap.add var Vd.bottom dom) VarMap.empty Vars.support
-    let is_bottom = VarMap.for_all (fun _ -> Vd.is_bottom)
+    let is_bottom = VarMap.exists (fun _ -> Vd.is_bottom)
 
     let rec get_value dom x =
         match x with
@@ -121,14 +121,35 @@ module MakeForwardOnly(Vars: VARS)(Vd: ValueDomain.VALUE_DOMAIN) : DOMAIN = stru
                 | None -> bottom
         ) d1 d2 
 
-    let widen d1 d2 = (* TODO : check *)
-
+    let widen d1 d2 =
         VarMap.mapi (fun var _ ->
             let value = VarMap.find_opt var d1 |> Option.value ~default:Vd.bottom
             in
             Vd.widen value (VarMap.find var d2)
         ) (join d1 d2)
-
+    
+    (* [bwd dom expr result] is the domain that over approximates the domain
+           that evaluates [expr] to [result] using [Vd.bwd_unary] and 
+           [Vd.bwd_binary]*)
+    let rec bwd dom expr result = 
+        match expr with
+        | CFG_int_const(a) -> if Vd.leq (Vd.const a) result then dom else bottom
+        | CFG_int_rand(a, b) ->
+            if Vd.is_bottom (Vd.meet result (Vd.rand a b)) then bottom
+            else dom
+        | CFG_int_var(var) ->
+            let value = VarMap.find_opt var dom 
+                |> Option.value ~default:Vd.bottom
+                |> Vd.meet result (* unify the value found 
+                                    with the expected result *)
+            in
+            VarMap.add var value dom
+        | CFG_int_unary(op, expr) ->
+            bwd dom expr (Vd.bwd_unary (get_value dom expr) op result)
+        | CFG_int_binary(op, e1, e2) ->
+            let result_left, result_right = Vd.bwd_binary (get_value dom e1) (get_value dom e2) op result in
+            bwd (bwd dom e1 result_left) e2 result_right
+    
     let rec guard dom bexpr =
         match bexpr with
         | CFG_bool_unary(AST_NOT, e) -> guard dom (prop_not e)
@@ -138,7 +159,11 @@ module MakeForwardOnly(Vars: VARS)(Vd: ValueDomain.VALUE_DOMAIN) : DOMAIN = stru
         | CFG_bool_rand -> dom
         | CFG_compare(op, e1, e2) ->
                 let left, right = Vd.compare (get_value dom e1) (get_value dom e2) op in
-                dom (* TODO : use bwd *)
+                (* The guard limits the domain [dom] to those that evaluate
+                   [e2] to [right] when [e1] is evaluated to [left], which
+                   corresponds to making the expressions (hence the domain)
+                   follow the approximation [Vd.compare] gives us *)
+                bwd (bwd dom e1 left) e2 right
 
     let leq d1 d2 =
         VarMap.fold (fun var value is_leq ->
@@ -151,7 +176,7 @@ module MakeForwardOnly(Vars: VARS)(Vd: ValueDomain.VALUE_DOMAIN) : DOMAIN = stru
         Format.fprintf fmt "{";
         VarMap.iter (
             fun var value ->
-                Format.fprintf fmt "%s <- " var.var_name;
+                Format.fprintf fmt "%s = " var.var_name;
                 Vd.pp fmt value;
                 Format.fprintf fmt ", "
         ) dom;

@@ -287,13 +287,34 @@ total=$(expr $(find examples -name "*.c" | wc -l))
 solved=0
 
 treat_examples "bool" "Boolean operations" "--domain constants" ""
-treat_examples "bool" "Boolean operations" "--domain interval" ""
 treat_examples "constant" "Constants operations" "--domain constants" ""
 treat_examples "constant_loop" "Constants loops" "--domain constants" ""
+treat_examples "interval" "Interval operatons" "--domain constants" ""
+treat_examples "interval_loop" "Interval loops" "--domain constants" ""
+
+treat_examples "bool" "Boolean operations" "--domain interval" ""
 treat_examples "constant" "Constants operations (I)" "--domain interval" ""
 treat_examples "interval" "Interval operations" "--domain interval" ""
 treat_examples "constant_loop" "Constants loops (I)" "--domain interval" ""
 treat_examples "interval_loop" "Interval loops" "--domain interval" ""
+
+treat_examples "bool" "Boolean operations" "--domain sign" ""
+treat_examples "constant" "Constants operations" "--domain sign" ""
+treat_examples "constant_loop" "Constants loops" "--domain sign" ""
+treat_examples "interval" "Interval operations" "--domain sign" ""
+treat_examples "interval_loop" "Interval loops" "--domain sign" ""
+
+treat_examples "bool" "Boolean operations" "--domain polyhedral" ""
+treat_examples "constant" "Constants operations" "--domain polyhedral" ""
+treat_examples "constant_loop" "Constants loops" "--domain polyhedral" ""
+treat_examples "interval" "Interval operations" "--domain polyhedral" ""
+treat_examples "interval_loop" "Interval loops" "--domain polyhedral" ""
+
+treat_examples "bool" "Boolean operations" "--domain octagon" ""
+treat_examples "constant" "Constants operations" "--domain octagon" ""
+treat_examples "constant_loop" "Constants loops" "--domain octagon" ""
+treat_examples "interval" "Interval operations" "--domain octagon" ""
+treat_examples "interval_loop" "Interval loops" "--domain octagon" ""
 
 echo "</table>"                                   >> $index_html
 echo "</body>"                                    >> $index_html
