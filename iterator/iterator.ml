@@ -55,7 +55,7 @@ module Make (Dom : Domain.DOMAIN) =
                             domain_assertion_success
                     | CFG_call f -> iter_func f
                 in
-                let rec loop (states: Dom.t NodeMap.t) (wl: NodeSet.t) : Dom.t NodeMap.t =
+            let rec loop (states: Dom.t NodeMap.t) (wl: NodeSet.t) : Dom.t NodeMap.t =
                 match NodeSet.choose_opt wl with
                 | None -> states
                 | Some node ->

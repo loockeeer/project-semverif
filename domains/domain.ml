@@ -68,7 +68,7 @@ module MakeForwardOnly(Vars: VARS)(Vd: ValueDomain.VALUE_DOMAIN) : DOMAIN = stru
     let bottom = List.fold_left (fun dom var -> VarMap.add var Vd.bottom dom) VarMap.empty Vars.support
     let is_bottom = VarMap.exists (fun _ -> Vd.is_bottom)
 
-    let rec get_value dom x =
+    let rec get_value (dom : t) (x: int_expr) : Vd.t =
         match x with
         | CFG_int_const i -> Vd.const i
         | CFG_int_rand (from_c, to_c) -> Vd.rand from_c to_c
