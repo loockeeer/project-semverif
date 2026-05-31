@@ -17,6 +17,8 @@
         in
         pkgs.mkShell {
           packages = [
+		  	pkgs.mpfr
+			ocamlCtx.camlidl
             ocamlCtx.lsp
             ocamlCtx.dune_3
             ocamlCtx.ocaml
@@ -27,6 +29,7 @@
             ocamlCtx.menhirLib
             ocamlCtx.zarith
             ocamlCtx.ocamlformat
+			ocamlCtx.apron
           ];
         };
     };
