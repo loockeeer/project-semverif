@@ -3,7 +3,14 @@ open Frontend.AbstractSyntax
 
 type t = Zero | Pos | Neg | Top | Bot
 
-let pp fmt x = failwith "wip"
+let pp fmt x = Format.fprintf fmt "%s" (
+    match x with
+    | Top -> "⊤"
+    | Bot -> "⊥"
+    | Zero -> "0"
+    | Pos -> "+"
+    | Neg -> "-"
+) 
 
 let top = Top
 let bottom = Bot
@@ -88,6 +95,23 @@ is included in [Top], by definition *)
 | _ -> x = y (* Since the concrete domains associated with [Pos], [Neg] and
 [Zero] are all disjoint, they are never included in one another *)
 
-let bwd_unary _ _ _ = failwith "not implemented"
-let bwd_binary _ _ _ = failwith "not implemented"
+let bwd_unary x _ _ = x
+let bwd_binary x y op r =
+    match op with
+    | AST_PLUS -> meet x (binary r y AST_MINUS), meet y (binary r x AST_MINUS)
+    | AST_MINUS -> meet x (binary r y AST_PLUS), meet y (binary r x AST_PLUS)
+    | AST_DIVIDE -> meet x (binary r y AST_MULTIPLY), meet y (binary r x AST_MULTIPLY)
+    | AST_MODULO -> (x, x)
+    | AST_MULTIPLY -> 
+            let left = match y, r with
+                    | Zero, Zero -> x
+                    | Zero, _ -> bottom
+                    | _ -> meet x (binary r y AST_DIVIDE)
+            in
+            let right = match x, r with
+            | Zero, Zero -> y
+            | Zero, _ -> bottom
+            | _ -> meet y (binary r x AST_DIVIDE)
+            in
+            left, right 
 let narrow _ _ = failwith "not implemented"
