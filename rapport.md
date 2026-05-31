@@ -75,5 +75,3 @@ into linear expressions when possible, which allows to express constraints in th
 
 One difficulty was writing the domain without being able to test it, as the iterator was not finished yet. Added to this,
 the domain is very complex and when expressions are not linear, deciding on the transformation is not trivial.
-
-## Analyzer
